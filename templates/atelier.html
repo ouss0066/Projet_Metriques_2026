@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Vent Marseille</title>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; background: #f0f4f8; }
+    h1 { color: #1a1a2e; margin-bottom: 4px; }
+    p { color: #666; margin-bottom: 24px; font-size: 14px; }
+    #chart { width: 100%; height: 520px; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    #status { margin-top: 12px; color: #888; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>🌬️ Vitesse du vent — Marseille</h1>
+  <p>Prévisions horaires sur 7 jours (km/h) — source : open-meteo.com</p>
+  <div id="chart"></div>
+  <div id="status"></div>
+  <script>
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(init);
+
+    async function init() {
+      try {
+        const res = await fetch('/atelier-data');
+        const json = await res.json();
+
+        const data = new google.visualization.DataTable();
+        data.addColumn('string', 'Date/Heure');
+        data.addColumn('number', 'Vent (km/h)');
+
+        json.forEach(p => {
+          data.addRow([p.datetime.replace('T', ' '), Number(p.windspeed)]);
+        });
+
+        const options = {
+          title: 'Vitesse du vent à Marseille (horaire)',
+          legend: { position: 'bottom' },
+          hAxis: { title: 'Date/Heure', slantedText: true, slantedTextAngle: 45 },
+          vAxis: { title: 'km/h', minValue: 0 },
+          colors: ['#0f3460'],
+          areaOpacity: 0.3,
+          curveType: 'function'
+        };
+
+        const chart = new google.visualization.AreaChart(document.getElementById('chart'));
+        chart.draw(data, options);
+        document.getElementById('status').textContent = `OK — ${json.length} points chargés`;
+      } catch (err) {
+        document.getElementById('status').textContent = 'Erreur : ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
